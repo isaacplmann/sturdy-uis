@@ -5,7 +5,13 @@ interface FetchSchema {
   states: {
     idle: {};
     pending: {};
-    fulfilled: {};
+    fulfilled: {
+      states: {
+        unknown: {};
+        withData: {};
+        withoutData: {};
+      };
+    };
     rejected: {};
   };
 }
@@ -41,6 +47,19 @@ export const fetchMachine = Machine<FetchContext, FetchSchema, FetchEvents>(
         entry: ['setResults'],
         on: {
           FETCH: 'pending'
+        },
+        initial: 'unknown',
+        states: {
+          unknown: {
+            on: {
+              '': [
+                { target: 'withData', cond: 'hasData' },
+                { target: 'withoutData' }
+              ]
+            }
+          },
+          withData: {},
+          withoutData: {}
         }
       },
       rejected: {
@@ -59,6 +78,9 @@ export const fetchMachine = Machine<FetchContext, FetchSchema, FetchEvents>(
       setMessage: assign((ctx, event: any) => ({
         message: event.message
       }))
+    },
+    guards: {
+      hasData: (ctx, event) => !!ctx.results && ctx.results.length > 0
     }
   }
 );
