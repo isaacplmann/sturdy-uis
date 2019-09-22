@@ -1,4 +1,4 @@
-import { Machine, assign, AssignAction } from 'xstate';
+import { assign, Machine } from 'xstate';
 
 // The hierarchical (recursive) schema for the states
 interface FetchSchema {

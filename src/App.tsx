@@ -1,8 +1,9 @@
-import { useMachine } from '@xstate/react';
-import React from 'react';
-import { fetchPeople, mockFetch, fetchPlanets } from './api';
+import React, { useEffect } from 'react';
+import { fetchPeople, fetchPlanets } from './api';
 import './App.css';
-import { fetchMachine } from './machines/fetch';
+import List from './list/List';
+import { matchingMachine } from './machines/matching';
+import { useMachine } from '@xstate/react';
 
 export interface Person {
   name: string;
@@ -10,81 +11,40 @@ export interface Person {
 }
 
 function App() {
-  const [peopleMachine, sendToPeopleMachine] = useMachine(fetchMachine, {
-    actions: {
-      fetchData: () => {
-        fetchPeople()
-          .then(r => r.results)
-          .then(
-            results => {
-              sendToPeopleMachine({ type: 'RESOLVE', results });
-            },
-            message => {
-              sendToPeopleMachine({ type: 'REJECT', message });
-            }
-          );
-      }
-    }
-  });
-  const [planetMachine, sendToPlanetMachine] = useMachine(fetchMachine, {
-    actions: {
-      fetchData: () => {
-        fetchPlanets()
-          .then(r => r.results)
-          .then(
-            results => {
-              sendToPlanetMachine({ type: 'RESOLVE', results });
-            },
-            message => {
-              sendToPlanetMachine({ type: 'REJECT', message });
-            }
-          );
-      }
+  const [machine, send] = useMachine(matchingMachine, {
+    guards: {
+      isCorrect: (ctx, event) =>
+        ctx.leftSelectedItem.homeworld === ctx.rightSelectedItem.url
     }
   });
 
   return (
     <div className="App">
-      <button onClick={() => sendToPeopleMachine({ type: 'FETCH' })}>
-        Fetch People
-      </button>
-      {peopleMachine.matches('idle') ? <p>Idle</p> : null}
-      {peopleMachine.matches('pending') ? <p>Loading</p> : null}
-      {peopleMachine.matches('fulfilled.withData') ? (
-        <ul>
-          {peopleMachine.context.results &&
-            peopleMachine.context.results.map((person, index) => (
-              <li key={index}>{person.name}</li>
-            ))}
-        </ul>
+      {machine.matches('answering') ? (
+        <>
+          <List
+            fetchData={fetchPeople}
+            onSelection={selectedItem => {
+              send({ type: 'selectLeft', selectedItem });
+            }}
+          ></List>
+          <hr></hr>
+          <List
+            fetchData={fetchPlanets}
+            onSelection={selectedItem => {
+              send({ type: 'selectRight', selectedItem });
+            }}
+          ></List>
+        </>
       ) : null}
-      {peopleMachine.matches('fulfilled.withoutData') ? (
-        <p>No results</p>
+      {machine.matches('submitted') ? (
+        <button onClick={() => send({ type: 'reset' })}>Reset</button>
       ) : null}
-      {peopleMachine.matches('rejected') ? (
-        <p>{peopleMachine.context.message}</p>
+      {machine.matches('submitted.correct') ? (
+        <p>The force is strong with this one.</p>
       ) : null}
-
-      <hr></hr>
-
-      <button onClick={() => sendToPlanetMachine({ type: 'FETCH' })}>
-        Fetch Planets
-      </button>
-      {planetMachine.matches('idle') ? <p>Idle</p> : null}
-      {planetMachine.matches('pending') ? <p>Loading</p> : null}
-      {planetMachine.matches('fulfilled.withData') ? (
-        <ul>
-          {planetMachine.context.results &&
-            planetMachine.context.results.map((planet, index) => (
-              <li key={index}>{planet.name}</li>
-            ))}
-        </ul>
-      ) : null}
-      {planetMachine.matches('fulfilled.withoutData') ? (
-        <p>No results</p>
-      ) : null}
-      {planetMachine.matches('rejected') ? (
-        <p>{planetMachine.context.message}</p>
+      {machine.matches('submitted.incorrect') ? (
+        <p>Do, or do not. There is no try.</p>
       ) : null}
     </div>
   );
