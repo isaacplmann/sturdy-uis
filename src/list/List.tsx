@@ -6,9 +6,11 @@ import './List.css';
 
 function List({
   fetchData,
+  selectedItem,
   onSelection
 }: {
   fetchData: () => Promise<{ results: { name: string }[] }>;
+  selectedItem?: any;
   onSelection?: (selectedItem: any) => void;
 }) {
   useEffect(() => {
@@ -26,6 +28,13 @@ function List({
             message => {
               sendToDataMachine({ type: 'REJECT', message });
             }
+          );
+      },
+      notifyHasData: ctx => {
+        selectMachine.context.selectedIndex =
+          ctx.results &&
+          ctx.results.findIndex(
+            item => selectedItem && selectedItem.name === item.name
           );
       }
     }

@@ -20,21 +20,43 @@ function App() {
 
   return (
     <div className="App">
-      {machine.matches('answering') ? (
+      {JSON.stringify(machine.value)}
+      {machine.matches('answering.notReadyToSubmit') ? (
         <>
           <List
-            fetchData={fetchPeople}
+            fetchData={() => fetchPeople({ maxDelay: 200, errorRate: 0 })}
+            selectedItem={machine.context.leftSelectedItem}
             onSelection={selectedItem => {
               send({ type: 'selectLeft', selectedItem });
             }}
           ></List>
           <hr></hr>
           <List
-            fetchData={fetchPlanets}
+            fetchData={() => fetchPlanets({ maxDelay: 200, errorRate: 0 })}
+            selectedItem={machine.context.rightSelectedItem}
             onSelection={selectedItem => {
               send({ type: 'selectRight', selectedItem });
             }}
           ></List>
+        </>
+      ) : null}
+      {machine.matches('answering.notReadyToSubmit') ? (
+        <button onClick={() => send({ type: 'continue' })}>Continue</button>
+      ) : null}
+      {machine.matches('answering.readyToSubmit') ? (
+        <>
+          <label>Chosen items:</label>
+          <p>
+            {machine.context.leftSelectedItem &&
+              machine.context.leftSelectedItem.name}{' '}
+            and
+            {machine.context.rightSelectedItem &&
+              machine.context.rightSelectedItem.name}
+          </p>
+          <button onClick={() => send({ type: 'changeAnswers' })}>
+            Change Answers
+          </button>
+          <button onClick={() => send({ type: 'submit' })}>Submit</button>
         </>
       ) : null}
       {machine.matches('submitted') ? (

@@ -5,18 +5,24 @@ interface MatchingSchema {
   states: {
     answering: {
       states: {
-        leftSide: {
+        notReadyToSubmit: {
           states: {
-            unselected: {};
-            selected: {};
+            leftSide: {
+              states: {
+                unselected: {};
+                selected: {};
+              };
+            };
+            rightSide: {
+              states: {
+                unselected: {};
+                selected: {};
+              };
+            };
+            hist: {};
           };
         };
-        rightSide: {
-          states: {
-            unselected: {};
-            selected: {};
-          };
-        };
+        readyToSubmit: {};
       };
     };
     submitted: {
@@ -33,6 +39,9 @@ interface MatchingSchema {
 type MatchingEvents =
   | { type: 'selectLeft'; selectedItem: any }
   | { type: 'selectRight'; selectedItem: any }
+  | { type: 'continue' }
+  | { type: 'changeAnswers' }
+  | { type: 'submit' }
   | { type: 'reset' };
 
 // The context (extended state) of the machine
@@ -55,46 +64,77 @@ export const matchingMachine = Machine<
     },
     states: {
       answering: {
-        type: 'parallel',
+        initial: 'notReadyToSubmit',
         states: {
-          leftSide: {
-            initial: 'unselected',
+          notReadyToSubmit: {
+            type: 'parallel',
+            on: {
+              continue: {
+                target: 'readyToSubmit',
+                cond: 'areQuestionsAnswered'
+              }
+            },
             states: {
-              unselected: {
-                on: {
-                  selectLeft: 'selected'
+              leftSide: {
+                initial: 'unselected',
+                states: {
+                  unselected: {
+                    on: {
+                      selectLeft: {
+                        target: 'selected',
+                        actions: ['setLeftSelectedItem']
+                      }
+                    }
+                  },
+                  selected: {
+                    type: 'final',
+                    on: {
+                      selectLeft: {
+                        target: 'selected',
+                        actions: ['setLeftSelectedItem']
+                      }
+                    }
+                  }
                 }
               },
-              selected: {
-                type: 'final',
-                entry: ['setLeftSelectedItem'],
-                on: {
-                  selectLeft: 'selected'
+              rightSide: {
+                initial: 'unselected',
+                states: {
+                  unselected: {
+                    on: {
+                      selectRight: {
+                        target: 'selected',
+                        actions: ['setRightSelectedItem']
+                      }
+                    }
+                  },
+                  selected: {
+                    type: 'final',
+                    on: {
+                      selectRight: {
+                        target: 'selected',
+                        actions: ['setRightSelectedItem']
+                      }
+                    }
+                  }
                 }
+              },
+              hist: {
+                type: 'history',
+                history: 'deep'
               }
             }
           },
-          rightSide: {
-            initial: 'unselected',
-            states: {
-              unselected: {
-                on: {
-                  selectRight: 'selected'
-                }
-              },
-              selected: {
-                type: 'final',
-                entry: ['setRightSelectedItem'],
-                on: {
-                  selectRight: 'selected'
-                }
-              }
+          readyToSubmit: {
+            on: {
+              changeAnswers: 'notReadyToSubmit.hist',
+              submit: '#submitted'
             }
           }
-        },
-        onDone: 'submitted'
+        }
       },
       submitted: {
+        id: 'submitted',
         initial: 'evaluating',
         on: {
           reset: 'answering'
@@ -119,9 +159,13 @@ export const matchingMachine = Machine<
     actions: {
       setLeftSelectedItem: assign((ctx, event: any) => ({
         leftSelectedItem: event.selectedItem
+          ? event.selectedItem
+          : ctx.leftSelectedItem
       })),
       setRightSelectedItem: assign((ctx, event: any) => ({
         rightSelectedItem: event.selectedItem
+          ? event.selectedItem
+          : ctx.rightSelectedItem
       })),
       clearSelections: assign(() => ({
         leftSelectedItem: undefined,
@@ -129,6 +173,9 @@ export const matchingMachine = Machine<
       }))
     },
     guards: {
+      areQuestionsAnswered: ctx => {
+        return ctx.leftSelectedItem && ctx.rightSelectedItem;
+      },
       isCorrect: () => true
     }
   }

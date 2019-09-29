@@ -58,7 +58,9 @@ export const fetchMachine = Machine<FetchContext, FetchSchema, FetchEvents>(
               ]
             }
           },
-          withData: {},
+          withData: {
+            entry: ['notifyHasData']
+          },
           withoutData: {}
         }
       },
