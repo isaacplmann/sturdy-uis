@@ -1,7 +1,7 @@
-import React, { useEffect } from 'react';
+import React, { useState } from 'react';
 import { fetchPeople, fetchPlanets } from './api';
 import './App.css';
-import List from './list/List';
+import List, { SideOfTheForce } from './list/List';
 import { matchingMachine } from './machines/matching';
 import { useMachine } from '@xstate/react';
 
@@ -18,14 +18,16 @@ function App() {
     }
   });
 
+  const [mode, setMode] = useState<SideOfTheForce>(SideOfTheForce.Light);
+
   return (
     <div className="App">
-      {JSON.stringify(machine.value)}
       {machine.matches('answering.notReadyToSubmit') ? (
         <>
           <List
             fetchData={() => fetchPeople({ maxDelay: 200, errorRate: 0 })}
             selectedItem={machine.context.leftSelectedItem}
+            sideOfTheForce={mode}
             onSelection={selectedItem => {
               send({ type: 'selectLeft', selectedItem });
             }}
@@ -34,14 +36,27 @@ function App() {
           <List
             fetchData={() => fetchPlanets({ maxDelay: 200, errorRate: 0 })}
             selectedItem={machine.context.rightSelectedItem}
+            sideOfTheForce={mode}
             onSelection={selectedItem => {
               send({ type: 'selectRight', selectedItem });
             }}
           ></List>
+          <button
+            onClick={() =>
+              setMode(
+                mode === SideOfTheForce.Light
+                  ? SideOfTheForce.Dark
+                  : SideOfTheForce.Light
+              )
+            }
+          >
+            {mode === SideOfTheForce.Light
+              ? 'Come to the Dark'
+              : 'Return to the Light'}{' '}
+            Side
+          </button>
+          <button onClick={() => send({ type: 'continue' })}>Continue</button>
         </>
-      ) : null}
-      {machine.matches('answering.notReadyToSubmit') ? (
-        <button onClick={() => send({ type: 'continue' })}>Continue</button>
       ) : null}
       {machine.matches('answering.readyToSubmit') ? (
         <>
