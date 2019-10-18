@@ -71,15 +71,15 @@ function List({
     randomizedMachine,
     {
       activities: {
-        shuffleSeed: (ctx, activity) => {
-          // Start the beeping activity
+        chaosIsHappening: (ctx, activity) => {
+          // Start the activity
           setAmplitude(prev => prev + 10);
           const interval = setInterval(
             () => setAmplitude(prev => prev + 10),
             600
           );
 
-          // Return a function that stops the beeping activity
+          // Return a function that stops the activity
           return () => {
             setAmplitude(0);
             clearInterval(interval);

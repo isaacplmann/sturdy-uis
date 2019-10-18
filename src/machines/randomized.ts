@@ -32,7 +32,7 @@ export const randomizedMachine = Machine<
         }
       },
       randomized: {
-        activities: 'shuffleSeed',
+        activities: 'chaosIsHappening',
         on: {
           reset: 'default',
           randomize: 'randomized'
@@ -42,7 +42,7 @@ export const randomizedMachine = Machine<
   },
   {
     activities: {
-      shuffleSeed: () => {}
+      chaosIsHappening: () => {}
     }
   }
 );
