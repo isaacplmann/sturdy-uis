@@ -26,19 +26,12 @@ function List({
   onSelection?: (selectedItem: any) => void;
 }) {
   const [dataState, sendToDataMachine] = useMachine(fetchMachine, {
-    actions: {
+    services: {
       fetchData: () => {
-        fetchData()
-          .then(r => r.results)
-          .then(
-            results => {
-              sendToDataMachine({ type: 'RESOLVE', results });
-            },
-            message => {
-              sendToDataMachine({ type: 'REJECT', message });
-            }
-          );
-      },
+        return fetchData().then(r => r.results);
+      }
+    },
+    actions: {
       notifyHasData: ctx => {
         selectionState.context.selectedIndex =
           ctx.results &&

@@ -37,10 +37,10 @@ export const fetchMachine = Machine<FetchContext, FetchSchema, FetchEvents>(
         on: { FETCH: 'pending' }
       },
       pending: {
-        entry: ['fetchData'],
-        on: {
-          RESOLVE: { target: 'fulfilled' },
-          REJECT: { target: 'rejected' }
+        invoke: {
+          src: 'fetchData',
+          onDone: { target: 'fulfilled', actions: 'setResults' },
+          onError: { target: 'rejected', actions: 'setMessage' }
         }
       },
       fulfilled: {
@@ -75,10 +75,10 @@ export const fetchMachine = Machine<FetchContext, FetchSchema, FetchEvents>(
   {
     actions: {
       setResults: assign((ctx, event: any) => ({
-        results: event.results
+        results: event.data
       })),
       setMessage: assign((ctx, event: any) => ({
-        message: event.message
+        message: event.data
       }))
     },
     guards: {
