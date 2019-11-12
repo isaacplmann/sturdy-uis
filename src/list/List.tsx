@@ -1,8 +1,8 @@
 import { useMachine } from '@xstate/react';
 import React, { useEffect } from 'react';
 import { fetchMachine } from '../machines/fetch';
-import { selectionMachine } from '../machines/select';
 import './List.css';
+import ListItem from './ListItem';
 
 function List({
   fetchData,
@@ -31,19 +31,6 @@ function List({
     }
   });
 
-  const [selectMachine, sendToSelectMachine] = useMachine(selectionMachine, {
-    actions: {
-      notifySelection: (ctx, event) => {
-        if (
-          dataMachine.context.results &&
-          ctx.selectedIndex !== undefined &&
-          onSelection
-        ) {
-          onSelection(dataMachine.context.results[ctx.selectedIndex]);
-        }
-      }
-    }
-  });
   return (
     <>
       <button onClick={() => sendToDataMachine({ type: 'FETCH' })}>
@@ -55,26 +42,12 @@ function List({
         <ul>
           {dataMachine.context.results &&
             dataMachine.context.results.map((item, index) => (
-              <li
+              <ListItem
                 key={index}
-                className={
-                  selectMachine.context.selectedIndex === index
-                    ? 'selected'
-                    : ''
-                }
-              >
-                <button
-                  className="selection-button"
-                  onClick={() =>
-                    sendToSelectMachine({
-                      type: 'select',
-                      selectedIndex: index
-                    })
-                  }
-                >
-                  {item.name}
-                </button>
-              </li>
+                index={index}
+                item={item}
+                onSelection={onSelection}
+              ></ListItem>
             ))}
         </ul>
       ) : null}
