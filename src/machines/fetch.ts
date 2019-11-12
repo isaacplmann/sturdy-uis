@@ -62,3 +62,8 @@ export const fetchMachine = Machine<FetchContext, FetchSchema, FetchEvents>(
     }
   }
 );
+
+// Exercise:
+// - Add withData and withoutData subStates of fulfilled.
+// - Add a guard
+// - Add an automatic transition
