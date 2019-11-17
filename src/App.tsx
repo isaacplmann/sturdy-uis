@@ -18,12 +18,10 @@ function App() {
       .then(r => r.results)
       .then(
         res => {
-          console.log(res);
           setResults(res);
           setIsLoading(false);
         },
         message => {
-          console.log(message);
           setErrorMessage(message);
           setIsLoading(false);
         }

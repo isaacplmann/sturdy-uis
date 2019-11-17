@@ -43,6 +43,7 @@ export function mockFetch<T>(
     );
 }
 
+let nextIsSuccess = true;
 export function fetchPeople(
   { maxDelay, errorRate } = {
     maxDelay: DEFAULT_MAX_DELAY,
@@ -52,6 +53,12 @@ export function fetchPeople(
   function getPeople() {
     return people;
   }
+  if (nextIsSuccess) {
+    errorRate = 0;
+  } else {
+    errorRate = 1;
+  }
+  nextIsSuccess = !nextIsSuccess;
   return mockFetch({ maxDelay, errorRate }, getPeople);
 }
 
