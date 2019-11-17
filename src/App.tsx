@@ -1,8 +1,6 @@
-import { useMachine } from '@xstate/react';
-import React from 'react';
+import React, { useState } from 'react';
 import { fetchPeople } from './api';
 import './App.css';
-import { fetchMachine } from './machines/fetch';
 
 export interface Person {
   name: string;
@@ -10,41 +8,39 @@ export interface Person {
 }
 
 function App() {
-  const [peopleMachine, send] = useMachine(fetchMachine, {
-    actions: {
-      fetchData: () => {
-        fetchPeople()
-          .then(r => r.results)
-          .then(
-            results => {
-              console.log(results);
-              send({ type: 'RESOLVE', results });
-            },
-            message => {
-              console.log(message);
-              send({ type: 'REJECT', message });
-            }
-          );
-      }
-    }
-  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [results, setResults] = useState<Person[]>([]);
+  const [errorMessage, setErrorMessage] = useState('');
+
+  function fetchData() {
+    setIsLoading(true);
+    fetchPeople()
+      .then(r => r.results)
+      .then(
+        res => {
+          console.log(res);
+          setResults(res);
+          setIsLoading(false);
+        },
+        message => {
+          console.log(message);
+          setErrorMessage(message);
+          setIsLoading(false);
+        }
+      );
+  }
 
   return (
     <div className="App">
-      <button onClick={() => send({ type: 'FETCH' })}>Fetch</button>
-      {peopleMachine.matches('idle') ? <p>Idle</p> : null}
-      {peopleMachine.matches('pending') ? <p>Loading</p> : null}
-      {peopleMachine.matches('fulfilled') ? (
+      <button onClick={() => fetchData()}>Fetch</button>
+      {isLoading ? <p>Loading</p> : null}
+      {!isLoading && !errorMessage ? (
         <ul>
-          {peopleMachine.context.results &&
-            peopleMachine.context.results.map((person, index) => (
-              <li key={index}>{person.name}</li>
-            ))}
+          {results &&
+            results.map((person, index) => <li key={index}>{person.name}</li>)}
         </ul>
       ) : null}
-      {peopleMachine.matches('rejected') ? (
-        <p>{peopleMachine.context.message}</p>
-      ) : null}
+      {!isLoading && errorMessage ? <p>{errorMessage}</p> : null}
     </div>
   );
 }
