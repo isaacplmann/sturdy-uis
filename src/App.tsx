@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import { useMachine } from '@xstate/react';
+import React from 'react';
 import { fetchPeople } from './api';
 import './App.css';
+import { fetchMachine } from './machines/fetch';
 
 export interface Person {
   name: string;
@@ -8,37 +10,40 @@ export interface Person {
 }
 
 function App() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [results, setResults] = useState<Person[]>([]);
-  const [errorMessage, setErrorMessage] = useState('');
-
-  function fetchData() {
-    setIsLoading(true);
-    fetchPeople()
-      .then(r => r.results)
-      .then(
-        res => {
-          setResults(res);
-          setIsLoading(false);
-        },
-        message => {
-          setErrorMessage(message);
-          setIsLoading(false);
-        }
-      );
-  }
+  const [fetchState, sendToFetchMachine] = useMachine(fetchMachine, {
+    actions: {
+      fetchData: (ctx, event) => {
+        fetchPeople()
+          .then(r => r.results)
+          .then(
+            res => {
+              sendToFetchMachine({ type: 'RESOLVE', results: res });
+            },
+            message => {
+              sendToFetchMachine({ type: 'REJECT', message });
+            }
+          );
+      }
+    }
+  });
 
   return (
     <div className="App">
-      <button onClick={() => fetchData()}>Fetch</button>
-      {isLoading ? <p>Loading</p> : null}
-      {!isLoading && !errorMessage ? (
+      <button onClick={() => sendToFetchMachine({ type: 'FETCH' })}>
+        Fetch
+      </button>
+      {fetchState.matches('pending') ? <p>Loading</p> : null}
+      {fetchState.matches('successful') ? (
         <ul>
-          {results &&
-            results.map((person, index) => <li key={index}>{person.name}</li>)}
+          {fetchState.context.results &&
+            fetchState.context.results.map((person, index) => (
+              <li key={index}>{person.name}</li>
+            ))}
         </ul>
       ) : null}
-      {!isLoading && errorMessage ? <p>{errorMessage}</p> : null}
+      {fetchState.matches('failed') ? (
+        <p>{fetchState.context.message}</p>
+      ) : null}
     </div>
   );
 }
