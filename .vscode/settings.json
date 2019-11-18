@@ -1,3 +1,4 @@
 {
-    "editor.minimap.enabled": false
+    "editor.minimap.enabled": false,
+    "editor.tabSize": 2
 }

@@ -1,6 +1,6 @@
 import { useMachine } from '@xstate/react';
 import React from 'react';
-import { fetchPeople } from './api';
+import { fetchPeople, fetchPlanets } from './api';
 import './App.css';
 import { fetchMachine } from './machines/fetch';
 
@@ -10,39 +10,51 @@ export interface Person {
 }
 
 function App() {
-  const [fetchState, sendToFetchMachine] = useMachine(fetchMachine, {
-    actions: {
-      fetchData: (ctx, event) => {
-        fetchPeople()
-          .then(r => r.results)
-          .then(
-            res => {
-              sendToFetchMachine({ type: 'RESOLVE', results: res });
-            },
-            message => {
-              sendToFetchMachine({ type: 'REJECT', message });
-            }
-          );
-      }
+  const [fetchPeopleState, sendToPeopleMachine] = useMachine(fetchMachine, {
+    services: {
+      fetchData: () => fetchPeople().then(r => r.results)
+    }
+  });
+  const [fetchPlanetState, sendToPlanetMachine] = useMachine(fetchMachine, {
+    services: {
+      fetchData: () => fetchPlanets().then(r => r.results)
     }
   });
 
   return (
     <div className="App">
-      <button onClick={() => sendToFetchMachine({ type: 'FETCH' })}>
+      <button onClick={() => sendToPeopleMachine({ type: 'FETCH' })}>
         Fetch
       </button>
-      {fetchState.matches('pending') ? <p>Loading</p> : null}
-      {fetchState.matches('successful') ? (
+      {fetchPeopleState.matches('pending') ? <p>Loading</p> : null}
+      {fetchPeopleState.matches('successful') ? (
         <ul>
-          {fetchState.context.results &&
-            fetchState.context.results.map((person, index) => (
+          {fetchPeopleState.context.results &&
+            fetchPeopleState.context.results.map((person, index) => (
               <li key={index}>{person.name}</li>
             ))}
         </ul>
       ) : null}
-      {fetchState.matches('failed') ? (
-        <p>{fetchState.context.message}</p>
+      {fetchPeopleState.matches('failed') ? (
+        <p>{fetchPeopleState.context.message}</p>
+      ) : null}
+
+      <hr />
+
+      <button onClick={() => sendToPlanetMachine({ type: 'FETCH' })}>
+        Fetch
+      </button>
+      {fetchPlanetState.matches('pending') ? <p>Loading</p> : null}
+      {fetchPlanetState.matches('successful') ? (
+        <ul>
+          {fetchPlanetState.context.results &&
+            fetchPlanetState.context.results.map((planet, index) => (
+              <li key={index}>{planet.name}</li>
+            ))}
+        </ul>
+      ) : null}
+      {fetchPlanetState.matches('failed') ? (
+        <p>{fetchPlanetState.context.message}</p>
       ) : null}
     </div>
   );
