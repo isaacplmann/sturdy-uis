@@ -9,10 +9,7 @@ interface FetchStates {
   };
 }
 
-type FetchMachineEvents =
-  | { type: 'FETCH' }
-  | { type: 'RESOLVE'; results: any[] }
-  | { type: 'REJECT'; message: string };
+type FetchMachineEvents = { type: 'FETCH' };
 
 interface FetchContext {
   results: any[];
