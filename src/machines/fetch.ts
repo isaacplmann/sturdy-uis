@@ -4,7 +4,13 @@ interface FetchStates {
   states: {
     idle: {};
     pending: {};
-    successful: {};
+    successful: {
+      states: {
+        unknown: {};
+        withData: {};
+        withoutData: {};
+      };
+    };
     failed: {};
   };
 }
@@ -47,8 +53,24 @@ export const fetchMachine = Machine<
         }
       },
       successful: {
+        initial: 'unknown',
         on: {
           FETCH: 'pending'
+        },
+        states: {
+          unknown: {
+            on: {
+              '': [
+                {
+                  target: 'withData',
+                  cond: 'hasData'
+                },
+                { target: 'withoutData' }
+              ]
+            }
+          },
+          withData: {},
+          withoutData: {}
         }
       }
     }
@@ -61,6 +83,11 @@ export const fetchMachine = Machine<
       setMessage: assign((ctx, event: any) => ({
         message: event.data
       }))
+    },
+    guards: {
+      hasData: (ctx, event: any) => {
+        return ctx.results && ctx.results.length > 0;
+      }
     }
   }
 );
