@@ -46,7 +46,6 @@ export function mockFetch<T>(
 function getEmptyResponse() {
   return { results: [] };
 }
-let nextIsSuccess = true;
 export function fetchPeople(
   { maxDelay, errorRate } = {
     maxDelay: DEFAULT_MAX_DELAY,
@@ -56,17 +55,9 @@ export function fetchPeople(
   function getPeople() {
     return people;
   }
-  let callback: () => { results: any[] };
-  if (nextIsSuccess) {
-    callback = getPeople;
-  } else {
-    callback = getEmptyResponse;
-  }
-  nextIsSuccess = !nextIsSuccess;
-  return mockFetch({ maxDelay: 500, errorRate: 0 }, callback);
+  return mockFetch({ maxDelay: 500, errorRate: 0 }, getPeople);
 }
 
-let nextPlanetIsSuccess = true;
 export function fetchPlanets(
   { maxDelay, errorRate } = {
     maxDelay: DEFAULT_MAX_DELAY,
@@ -76,12 +67,5 @@ export function fetchPlanets(
   function getPlanets() {
     return planets;
   }
-  let callback: () => { results: any[] };
-  if (nextPlanetIsSuccess) {
-    callback = getPlanets;
-  } else {
-    callback = getEmptyResponse;
-  }
-  nextPlanetIsSuccess = !nextPlanetIsSuccess;
-  return mockFetch({ maxDelay: 500, errorRate: 0 }, callback);
+  return mockFetch({ maxDelay: 500, errorRate: 0 }, getPlanets);
 }

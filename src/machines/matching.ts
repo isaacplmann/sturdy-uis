@@ -18,6 +18,7 @@ interface MatchingSchema {
                 selected: {};
               };
             };
+            hist: {};
           };
         };
         verifying: {};
@@ -38,6 +39,7 @@ type MatchingEvents =
   | { type: 'SELECT_BOTTOM'; selectedItem: any }
   | { type: 'CONTINUE' }
   | { type: 'CHANGE_ANSWERS' }
+  | { type: 'SUBMIT' }
   | { type: 'RESET' };
 
 // The context (extended state) of the machine
@@ -87,7 +89,8 @@ export const matchingMachine = Machine<
                         target: 'selected',
                         actions: ['setTopSelectedItem']
                       }
-                    }
+                    },
+                    type: 'final'
                   }
                 }
               },
@@ -108,20 +111,27 @@ export const matchingMachine = Machine<
                         target: 'selected',
                         actions: ['setBottomSelectedItem']
                       }
-                    }
+                    },
+                    type: 'final'
                   }
                 }
+              },
+              hist: {
+                type: 'history',
+                history: 'deep'
               }
             }
           },
           verifying: {
             on: {
-              CHANGE_ANSWERS: 'answering'
+              CHANGE_ANSWERS: 'answering.hist',
+              SUBMIT: '#submitted'
             }
           }
         }
       },
       submitted: {
+        id: 'submitted',
         initial: 'evaluating',
         on: {
           RESET: { target: 'quiz', actions: ['clearSelection'] }

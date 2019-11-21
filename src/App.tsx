@@ -1,5 +1,5 @@
 import { useMachine } from '@xstate/react';
-import React, { useEffect } from 'react';
+import React from 'react';
 import { fetchPeople, fetchPlanets } from './api';
 import { List } from './List';
 import './App.css';
@@ -21,8 +21,11 @@ function App() {
 
   return (
     <div className='App'>
-      {matchingState.matches('answering') ? (
+      {matchingState.matches('quiz.answering') ? (
         <>
+          <button onClick={() => sendToMatchingMachine({ type: 'CONTINUE' })}>
+            Continue
+          </button>
           <List
             fetchData={fetchPeople}
             selectedItem={matchingState.context.topSelectedItem}
@@ -38,6 +41,26 @@ function App() {
               sendToMatchingMachine({ type: 'SELECT_BOTTOM', selectedItem });
             }}
           ></List>
+        </>
+      ) : null}
+      {matchingState.matches('quiz.verifying') ? (
+        <>
+          <p>
+            You chose{' '}
+            {matchingState.context.topSelectedItem &&
+              matchingState.context.topSelectedItem.name}{' '}
+            and{' '}
+            {matchingState.context.bottomSelectedItem &&
+              matchingState.context.bottomSelectedItem.name}
+          </p>
+          <button
+            onClick={() => sendToMatchingMachine({ type: 'CHANGE_ANSWERS' })}
+          >
+            Change Answers
+          </button>
+          <button onClick={() => sendToMatchingMachine({ type: 'SUBMIT' })}>
+            Submit
+          </button>
         </>
       ) : null}
       {matchingState.matches('submitted.correct') ? (
