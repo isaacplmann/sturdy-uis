@@ -1,0 +1,8 @@
+.list-button {
+  width: 100%;
+  border: none;
+}
+
+.selected {
+  background: turquoise;
+}
