@@ -68,6 +68,12 @@ export const matchingMachine = Machine<
                 }
               },
               selected: {
+                on: {
+                  SELECT_TOP: {
+                    target: 'selected',
+                    actions: ['setTopSelectedItem']
+                  }
+                },
                 type: 'final'
               }
             }
@@ -84,6 +90,12 @@ export const matchingMachine = Machine<
                 }
               },
               selected: {
+                on: {
+                  SELECT_BOTTOM: {
+                    target: 'selected',
+                    actions: ['setBottomSelectedItem']
+                  }
+                },
                 type: 'final'
               }
             }
