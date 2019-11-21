@@ -2,20 +2,25 @@ import { Machine, assign } from 'xstate';
 
 interface MatchingSchema {
   states: {
-    answering: {
+    quiz: {
       states: {
-        topList: {
+        answering: {
           states: {
-            unselected: {};
-            selected: {};
+            topList: {
+              states: {
+                unselected: {};
+                selected: {};
+              };
+            };
+            bottomList: {
+              states: {
+                unselected: {};
+                selected: {};
+              };
+            };
           };
         };
-        bottomList: {
-          states: {
-            unselected: {};
-            selected: {};
-          };
-        };
+        verifying: {};
       };
     };
     submitted: {
@@ -31,6 +36,8 @@ interface MatchingSchema {
 type MatchingEvents =
   | { type: 'SELECT_TOP'; selectedItem: any }
   | { type: 'SELECT_BOTTOM'; selectedItem: any }
+  | { type: 'CONTINUE' }
+  | { type: 'CHANGE_ANSWERS' }
   | { type: 'RESET' };
 
 // The context (extended state) of the machine
@@ -46,64 +53,79 @@ export const matchingMachine = Machine<
 >(
   {
     id: 'matching',
-    initial: 'answering',
+    initial: 'quiz',
     context: {
       topSelectedItem: undefined,
       bottomSelectedItem: undefined
     },
     states: {
-      answering: {
-        type: 'parallel',
-        onDone: 'submitted',
+      quiz: {
+        initial: 'answering',
         states: {
-          topList: {
-            initial: 'unselected',
+          answering: {
+            type: 'parallel',
+            on: {
+              CONTINUE: {
+                target: 'verifying'
+              }
+            },
             states: {
-              unselected: {
-                on: {
-                  SELECT_TOP: {
-                    target: 'selected',
-                    actions: ['setTopSelectedItem']
+              topList: {
+                initial: 'unselected',
+                states: {
+                  unselected: {
+                    on: {
+                      SELECT_TOP: {
+                        target: 'selected',
+                        actions: ['setTopSelectedItem']
+                      }
+                    }
+                  },
+                  selected: {
+                    on: {
+                      SELECT_TOP: {
+                        target: 'selected',
+                        actions: ['setTopSelectedItem']
+                      }
+                    }
                   }
                 }
               },
-              selected: {
-                on: {
-                  SELECT_TOP: {
-                    target: 'selected',
-                    actions: ['setTopSelectedItem']
+              bottomList: {
+                initial: 'unselected',
+                states: {
+                  unselected: {
+                    on: {
+                      SELECT_BOTTOM: {
+                        target: 'selected',
+                        actions: ['setBottomSelectedItem']
+                      }
+                    }
+                  },
+                  selected: {
+                    on: {
+                      SELECT_BOTTOM: {
+                        target: 'selected',
+                        actions: ['setBottomSelectedItem']
+                      }
+                    }
                   }
-                },
-                type: 'final'
+                }
               }
             }
           },
-          bottomList: {
-            initial: 'unselected',
-            states: {
-              unselected: {
-                on: {
-                  SELECT_BOTTOM: {
-                    target: 'selected',
-                    actions: ['setBottomSelectedItem']
-                  }
-                }
-              },
-              selected: {
-                on: {
-                  SELECT_BOTTOM: {
-                    target: 'selected',
-                    actions: ['setBottomSelectedItem']
-                  }
-                },
-                type: 'final'
-              }
+          verifying: {
+            on: {
+              CHANGE_ANSWERS: 'answering'
             }
           }
         }
       },
       submitted: {
         initial: 'evaluating',
+        on: {
+          RESET: { target: 'quiz', actions: ['clearSelection'] }
+        },
         states: {
           evaluating: {
             on: {
@@ -126,6 +148,10 @@ export const matchingMachine = Machine<
       })),
       setBottomSelectedItem: assign((ctx, event: any) => ({
         bottomSelectedItem: event.selectedItem
+      })),
+      clearSelection: assign((ctx, event) => ({
+        topSelectedItem: undefined,
+        bottomSelectedItem: undefined
       }))
     }
   }
