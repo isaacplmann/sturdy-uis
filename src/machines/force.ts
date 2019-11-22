@@ -26,6 +26,7 @@ export const forceMachine = Machine<ForceContext, ForceSchema, ForceEvents>(
         }
       },
       dark: {
+        activities: ['theDarknessGrows'],
         on: {
           REDEEM: 'light'
         }
